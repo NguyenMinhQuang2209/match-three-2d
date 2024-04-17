@@ -41,4 +41,18 @@ public class Slot : MonoBehaviour
     {
         img.sprite = sprite;
     }
+    public string GetItemName()
+    {
+        return item.itemName;
+    }
+    public Item GetItem()
+    {
+        return item;
+    }
+
+    public bool CheckSlotHit(Item newItem)
+    {
+
+        return true;
+    }
 }

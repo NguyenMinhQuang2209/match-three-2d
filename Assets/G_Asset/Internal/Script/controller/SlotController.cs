@@ -12,6 +12,7 @@ public class SlotController : MonoBehaviour
 
     public Vector2Int size = new();
     private Dictionary<Vector2Int, Slot> slots = new();
+    private Dictionary<string, Item> itemStores = new();
     private List<Slot> remainSlots = new();
 
     [SerializeField] private float waitTimer = 1f;
@@ -56,6 +57,7 @@ public class SlotController : MonoBehaviour
         {
             Item item = new(sprites[i], i.ToString());
             items.Add(item);
+            itemStores[i.ToString()] = item;
         }
     }
     private void Update()
@@ -119,7 +121,75 @@ public class SlotController : MonoBehaviour
     public void CheckTouchEnd(Vector2 endTouch)
     {
         Vector2 target = endTouch - firstTouch;
-        Debug.Log(target.x + "-" + target.y);
+        if (Mathf.Abs(target.x) > Mathf.Abs(target.y))
+        {
+            // Left Right
+            if (target.x < 0)
+            {
+                if (currentSlot != null)
+                {
+                    Vector2Int currentPos = currentSlot.GetPosition();
+                    Vector2Int leftPos = new(currentPos.x - 1, currentPos.y);
+                    if (slots.ContainsKey(leftPos))
+                    {
+                        CheckSlotItem(slots[leftPos]);
+                    }
+                }
+            }
+            else if (target.x > 0)
+            {
+                if (currentSlot != null)
+                {
+                    Vector2Int currentPos = currentSlot.GetPosition();
+                    Vector2Int leftPos = new(currentPos.x + 1, currentPos.y);
+                    if (slots.ContainsKey(leftPos))
+                    {
+                        CheckSlotItem(slots[leftPos]);
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (target.y > 0)
+            {
+                if (currentSlot != null)
+                {
+                    Vector2Int currentPos = currentSlot.GetPosition();
+                    Vector2Int leftPos = new(currentPos.x, currentPos.y - 1);
+                    if (slots.ContainsKey(leftPos))
+                    {
+                        CheckSlotItem(slots[leftPos]);
+                    }
+                }
+            }
+            else if (target.y < 0)
+            {
+                if (currentSlot != null)
+                {
+                    Vector2Int currentPos = currentSlot.GetPosition();
+                    Vector2Int leftPos = new(currentPos.x, currentPos.y + 1);
+                    if (slots.ContainsKey(leftPos))
+                    {
+                        CheckSlotItem(slots[leftPos]);
+                    }
+                }
+            }
+        }
+    }
+    public void CheckSlotItem(Slot nextSlot)
+    {
+        Item currentItem = currentSlot.GetItem();
+        Item nextItem = nextSlot.GetItem();
+
+        bool currentCheck = currentSlot.CheckSlotHit(nextItem);
+        bool nextCheck = nextSlot.CheckSlotHit(currentItem);
+
+        if (currentCheck || nextCheck)
+        {
+            currentSlot.ChangeItem(nextItem, 0f);
+            nextSlot.ChangeItem(currentItem, 0f);
+        }
     }
     public void SpawnSlot()
     {
