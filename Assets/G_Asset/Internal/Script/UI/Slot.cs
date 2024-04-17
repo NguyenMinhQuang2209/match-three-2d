@@ -135,7 +135,7 @@ public class Slot : MonoBehaviour
     }
     public void SwitchSlotItem(float timer)
     {
-        Invoke(nameof(SwitchSlotItem), timer);
+        SwitchSlotItem();
     }
     public void SwitchSlotItem()
     {

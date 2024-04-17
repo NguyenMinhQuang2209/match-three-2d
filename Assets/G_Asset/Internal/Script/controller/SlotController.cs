@@ -14,6 +14,7 @@ public class SlotController : MonoBehaviour
     public GridLayoutGroup group;
     public TextMeshProUGUI pointTxt;
     public TextMeshProUGUI levelTxt;
+    public GameObject levelUp;
     int point = 0;
 
     private readonly Dictionary<Vector2Int, Slot> totalSlots = new();
@@ -55,7 +56,12 @@ public class SlotController : MonoBehaviour
     }
     private void Start()
     {
+        levelUp.SetActive(false);
         ChangeLevel();
+    }
+    public void OffLevelUp()
+    {
+        levelUp.SetActive(false);
     }
     public void GetListItems(List<Sprite> sprites)
     {
@@ -263,7 +269,9 @@ public class SlotController : MonoBehaviour
         if (currentLevel != nextLevel)
         {
             currentLevel = nextLevel;
+            levelUp.SetActive(true);
             ChangeLevel();
+            Invoke(nameof(OffLevelUp), 3f);
         }
     }
     public void CheckSlotItem(Slot nextSlot)
@@ -345,6 +353,11 @@ public class SlotController : MonoBehaviour
         int y = size.y;
         group.constraintCount = x;
         slots?.Clear();
+        totalSlots?.Clear();
+        foreach (Transform child in slot_container_ui.transform)
+        {
+            Destroy(child.gameObject);
+        }
         for (int i = 0; i < y; i++)
         {
             for (int j = 0; j < x; j++)

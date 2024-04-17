@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c78c9a6578c2324e98dde2accc5a39d, type: 3}
   m_Name: Level2
   m_EditorClassIdentifier: 
-  size: {x: 3, y: 4}
+  size: {x: 8, y: 8}
   sprites:
   - {fileID: 21300000, guid: 453fd4099bc358e4c8e05c1d27cd06d3, type: 3}
   - {fileID: 21300000, guid: c8e39ec2b5b392c4a8e4a0a65e005ddc, type: 3}
@@ -21,3 +21,4 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 1ef7da73f70598c418e8a366f914bf5d, type: 3}
   - {fileID: 21300000, guid: 01cc5cf2b4f2a424a9c8b6016bf5bfa9, type: 3}
   blocksList: []
+  requirePoint: 20
