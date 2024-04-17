@@ -40,6 +40,10 @@ public class Slot : MonoBehaviour
             icon.sprite = item.sprite;
         }
     }
+    public bool IsBlock()
+    {
+        return isBlock;
+    }
     public Vector2Int GetPosition()
     {
         return pos;
@@ -111,6 +115,12 @@ public class Slot : MonoBehaviour
             {
                 return total;
             }
+
+            if (checkSlot.IsBlock())
+            {
+                return total;
+            }
+
             if (IsEqual(checkSlot.GetItem()))
             {
                 total++;
@@ -121,6 +131,39 @@ public class Slot : MonoBehaviour
                 return total;
             }
             currentPos = nextDir;
+        }
+    }
+    public void SwitchSlotItem(float timer)
+    {
+        Invoke(nameof(SwitchSlotItem), timer);
+    }
+    public void SwitchSlotItem()
+    {
+        Vector2Int currentPos = new(pos.x, pos.y);
+        while (true)
+        {
+            Vector2Int nextPos = new(currentPos.x, currentPos.y - 1);
+            Slot nextSlot = SlotController.instance.GetSlot(nextPos);
+            if (nextSlot == null)
+            {
+                Item ranItem = SlotController.instance.GetRandomItem();
+                ChangeItem(ranItem, 0.02f);
+                return;
+            }
+            else
+            {
+                if (!nextSlot.IsBlock())
+                {
+                    Item nextItem = nextSlot.GetItem();
+                    ChangeItem(nextItem, 0.02f);
+                    nextSlot.SwitchSlotItem();
+                    return;
+                }
+                else
+                {
+                    currentPos = nextPos;
+                }
+            }
         }
     }
 }

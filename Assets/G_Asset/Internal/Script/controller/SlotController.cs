@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEditorInternal.Profiling.Memory.Experimental;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -10,15 +11,22 @@ public class SlotController : MonoBehaviour
     public static SlotController instance;
     public Slot slot;
     public Transform slot_container_ui;
+    public GridLayoutGroup group;
+    public TextMeshProUGUI pointTxt;
+    public TextMeshProUGUI levelTxt;
+    int point = 0;
 
-    public Vector2Int size = new();
-    private Dictionary<Vector2Int, Slot> slots = new();
-    private Dictionary<string, Item> itemStores = new();
-    private List<Slot> remainSlots = new();
+    private readonly Dictionary<Vector2Int, Slot> totalSlots = new();
+    private readonly Dictionary<Vector2Int, Slot> slots = new();
+    private readonly Dictionary<string, Item> itemStores = new();
+    private readonly List<Slot> remainSlots = new();
 
     [SerializeField] private float waitTimer = 1f;
     [SerializeField] private float timeBwt = 0.5f;
     int current = 1;
+
+    [SerializeField] private float waitCheckTimer = 1f;
+    [SerializeField] private float waitCheckTimerPerTime = 0.2f;
 
     [SerializeField] private Sprite touchSprite;
     [SerializeField] private Sprite defaultSprite;
@@ -28,14 +36,12 @@ public class SlotController : MonoBehaviour
     private GraphicRaycaster raycaster;
     [SerializeField] private EventSystem eventSystem;
 
-
-    [Space(5)]
-    [SerializeField] private List<Sprite> sprites = new();
     private List<Item> items = new();
 
     private Slot currentSlot = null;
-    [Space(5)]
-    [SerializeField] private List<Vector2Int> blocks = new();
+
+    [SerializeField] private List<LevelScriptable> levels = new();
+    int currentLevel = 0;
 
     Vector2 firstTouch = new();
     private void Awake()
@@ -49,11 +55,9 @@ public class SlotController : MonoBehaviour
     }
     private void Start()
     {
-        GetListItems();
-        SpawnSlot();
-        Invoke(nameof(SpawnItem), 1f);
+        ChangeLevel();
     }
-    public void GetListItems()
+    public void GetListItems(List<Sprite> sprites)
     {
         for (int i = 0; i < sprites.Count; i++)
         {
@@ -61,6 +65,15 @@ public class SlotController : MonoBehaviour
             items.Add(item);
             itemStores[i.ToString()] = item;
         }
+    }
+    public void ChangeLevel()
+    {
+        GetListItems(levels[currentLevel].sprites);
+        SpawnSlot(levels[currentLevel].size, levels[currentLevel].blocksList);
+        SpawnItem();
+
+        pointTxt.text = "Point: " + point.ToString();
+        levelTxt.text = "Level: " + currentLevel.ToString();
     }
     private void Update()
     {
@@ -179,8 +192,86 @@ public class SlotController : MonoBehaviour
             }
         }
     }
+    public void CheckAllSlots()
+    {
+        CheckAllSlots(false);
+    }
+    public void CheckAllSlots(bool countPoint)
+    {
+        Vector2Int size = levels[currentLevel].size;
+        int x = size.x;
+        int y = size.y;
+        List<Vector2Int> hitList = new();
+        do
+        {
+            hitList?.Clear();
+            for (int i = 0; i < y; i++)
+            {
+                for (int j = 0; j < x; j++)
+                {
+                    Vector2Int pos = new(j, i);
+                    Slot tempSlot = slots[pos];
+                    List<Vector2Int> hits = tempSlot.CheckSlotHit();
+                    if (hits.Count > 0)
+                    {
+                        hitList.AddRange(hits);
+                    }
+                }
+            }
+
+            if (hitList.Count > 0)
+            {
+                hitList.Sort((a, b) =>
+                {
+                    int compareY = a.y.CompareTo(b.y);
+                    if (compareY != 0)
+                    {
+                        return compareY;
+                    }
+                    return a.x.CompareTo(b.x);
+                });
+
+                for (int i = 0; i < hitList.Count; i++)
+                {
+                    Slot checkSlot = slots[hitList[i]];
+                    float timer = waitCheckTimer + waitCheckTimerPerTime * i;
+                    checkSlot.SwitchSlotItem(timer);
+                }
+                if (countPoint)
+                {
+                    //point += hitList.Count;
+                    CheckPoint();
+                }
+            }
+        } while (hitList.Count > 0);
+    }
+    public void CheckPoint()
+    {
+        pointTxt.text = "Point: " + point.ToString();
+        if (point >= levels[currentLevel].requirePoint && !IsMaxLevel())
+        {
+            LevelUp();
+        }
+    }
+    public bool IsMaxLevel()
+    {
+        return currentLevel == levels.Count - 1;
+    }
+    public void LevelUp()
+    {
+        int nextLevel = Mathf.Min(currentLevel + 1, levels.Count - 1);
+        if (currentLevel != nextLevel)
+        {
+            currentLevel = nextLevel;
+            ChangeLevel();
+        }
+    }
     public void CheckSlotItem(Slot nextSlot)
     {
+        if (nextSlot.IsBlock())
+        {
+            return;
+        }
         Item currentItem = currentSlot.GetItem();
         Item nextItem = nextSlot.GetItem();
 
@@ -197,6 +288,7 @@ public class SlotController : MonoBehaviour
         }
         else
         {
+            List<Vector2Int> checkList = new();
             if (currentCheck.Count > 0)
             {
                 for (int i = 0; i < currentCheck.Count; i++)
@@ -204,6 +296,7 @@ public class SlotController : MonoBehaviour
                     Slot slotCheck = slots[currentCheck[i]];
                     slotCheck.ChangeItemSprite(emptySprite);
                 }
+                checkList.AddRange(currentCheck);
             }
             if (nextCheck.Count > 0)
             {
@@ -212,6 +305,29 @@ public class SlotController : MonoBehaviour
                     Slot slotCheck = slots[nextCheck[i]];
                     slotCheck.ChangeItemSprite(emptySprite);
                 }
+                checkList.AddRange(nextCheck);
+            }
+            if (checkList.Count > 0)
+            {
+                point += checkList.Count;
+                CheckPoint();
+                checkList.Sort((a, b) =>
+                {
+                    int compareY = a.y.CompareTo(b.y);
+                    if (compareY != 0)
+                    {
+                        return compareY;
+                    }
+                    return a.x.CompareTo(b.x);
+                });
+                for (int i = 0; i < checkList.Count; i++)
+                {
+                    Slot checkSlot = slots[checkList[i]];
+                    float timer = waitCheckTimer + waitCheckTimerPerTime * i;
+                    checkSlot.SwitchSlotItem(timer);
+                }
+
+                CheckAllSlots(true);
             }
         }
     }
@@ -219,7 +335,7 @@ public class SlotController : MonoBehaviour
     {
         return slots.ContainsKey(pos) ? slots[pos] : null;
     }
-    public void SpawnSlot()
+    public void SpawnSlot(Vector2Int size, List<Vector2Int> blocks)
     {
         foreach (Transform child in slot_container_ui.transform)
         {
@@ -227,13 +343,24 @@ public class SlotController : MonoBehaviour
         }
         int x = size.x;
         int y = size.y;
+        group.constraintCount = x;
+        slots?.Clear();
         for (int i = 0; i < y; i++)
         {
             for (int j = 0; j < x; j++)
             {
                 Vector2Int pos = new(j, i);
-                Slot tempSlot = Instantiate(slot, slot_container_ui.transform);
+                Slot tempSlot;
+                if (!totalSlots.ContainsKey(pos))
+                {
+                    tempSlot = Instantiate(slot, slot_container_ui.transform);
+                }
+                else
+                {
+                    tempSlot = totalSlots[pos];
+                }
                 tempSlot.SlotInit(pos, blocks.Contains(pos));
+                totalSlots[pos] = tempSlot;
                 slots[pos] = tempSlot;
                 remainSlots.Add(tempSlot);
             }
@@ -241,6 +368,7 @@ public class SlotController : MonoBehaviour
     }
     public void SpawnItem()
     {
+        Vector2Int size = levels[currentLevel].size;
         int x = size.x;
         int y = size.y;
         for (int i = 0; i < y; i++)
@@ -254,6 +382,8 @@ public class SlotController : MonoBehaviour
                 current++;
             }
         }
+        float totalWaiter = waitTimer + timeBwt * current;
+        Invoke(nameof(CheckAllSlots), totalWaiter);
     }
 
 }
