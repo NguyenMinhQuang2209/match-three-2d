@@ -24,7 +24,14 @@ public class Slot : MonoBehaviour
             return;
         }
         item = newItem;
-        Invoke(nameof(ChangeSprite), timer);
+        if (timer > 0)
+        {
+            Invoke(nameof(ChangeSprite), timer);
+        }
+        else
+        {
+            ChangeSprite();
+        }
     }
     public void ChangeSprite()
     {
@@ -41,6 +48,10 @@ public class Slot : MonoBehaviour
     {
         img.sprite = sprite;
     }
+    public void ChangeItemSprite(Sprite newSprite = null)
+    {
+        icon.sprite = newSprite;
+    }
     public string GetItemName()
     {
         return item.itemName;
@@ -49,10 +60,67 @@ public class Slot : MonoBehaviour
     {
         return item;
     }
-
-    public bool CheckSlotHit(Item newItem)
+    public bool IsEqual(Item newItem)
     {
+        return newItem.itemName == item?.itemName;
+    }
 
-        return true;
+    public List<Vector2Int> CheckSlotHit()
+    {
+        List<Vector2Int> verticalSlots = new();
+        List<Vector2Int> horizontalSlots = new();
+
+        int countUp = TotalCount(verticalSlots, new(0, -1));
+        int countDown = TotalCount(verticalSlots, new(0, 1));
+        int countLeft = TotalCount(horizontalSlots, new(-1, 0));
+        int countRight = TotalCount(horizontalSlots, new(1, 0));
+
+        int countTopDown = countUp + countDown;
+        int countLeftRight = countLeft + countRight;
+
+        List<Vector2Int> finalList = new();
+
+        bool wasAdd = false;
+
+        if (countTopDown >= 2)
+        {
+            finalList.AddRange(verticalSlots);
+            finalList.Add(GetPosition());
+            wasAdd = true;
+        }
+        if (countLeftRight >= 2)
+        {
+            finalList.AddRange(horizontalSlots);
+            if (!wasAdd)
+            {
+                finalList.Add(GetPosition());
+            }
+        }
+
+        return finalList;
+    }
+    public int TotalCount(List<Vector2Int> list, Vector2Int change)
+    {
+        int total = 0;
+        Vector2Int currentPos = pos;
+        while (true)
+        {
+            Vector2Int nextDir = new(currentPos.x + change.x, currentPos.y + change.y);
+            Slot checkSlot = SlotController.instance.GetSlot(nextDir);
+            if (checkSlot == null)
+            {
+                return total;
+            }
+            if (IsEqual(checkSlot.GetItem()))
+            {
+                total++;
+                list.Add(nextDir);
+            }
+            else
+            {
+                return total;
+            }
+            currentPos = nextDir;
+        }
     }
 }

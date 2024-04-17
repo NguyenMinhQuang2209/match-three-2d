@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditorInternal.Profiling.Memory.Experimental;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -21,6 +22,7 @@ public class SlotController : MonoBehaviour
 
     [SerializeField] private Sprite touchSprite;
     [SerializeField] private Sprite defaultSprite;
+    [SerializeField] private Sprite emptySprite;
 
     [SerializeField]
     private GraphicRaycaster raycaster;
@@ -182,14 +184,40 @@ public class SlotController : MonoBehaviour
         Item currentItem = currentSlot.GetItem();
         Item nextItem = nextSlot.GetItem();
 
-        bool currentCheck = currentSlot.CheckSlotHit(nextItem);
-        bool nextCheck = nextSlot.CheckSlotHit(currentItem);
+        currentSlot.ChangeItem(nextItem, 0f);
+        nextSlot.ChangeItem(currentItem, 0f);
 
-        if (currentCheck || nextCheck)
+        List<Vector2Int> currentCheck = currentSlot.CheckSlotHit();
+        List<Vector2Int> nextCheck = nextSlot.CheckSlotHit();
+
+        if (currentCheck.Count == 0 && nextCheck.Count == 0)
         {
-            currentSlot.ChangeItem(nextItem, 0f);
-            nextSlot.ChangeItem(currentItem, 0f);
+            currentSlot.ChangeItem(currentItem, 0.1f);
+            nextSlot.ChangeItem(nextItem, 0.1f);
         }
+        else
+        {
+            if (currentCheck.Count > 0)
+            {
+                for (int i = 0; i < currentCheck.Count; i++)
+                {
+                    Slot slotCheck = slots[currentCheck[i]];
+                    slotCheck.ChangeItemSprite(emptySprite);
+                }
+            }
+            if (nextCheck.Count > 0)
+            {
+                for (int i = 0; i < nextCheck.Count; i++)
+                {
+                    Slot slotCheck = slots[nextCheck[i]];
+                    slotCheck.ChangeItemSprite(emptySprite);
+                }
+            }
+        }
+    }
+    public Slot GetSlot(Vector2Int pos)
+    {
+        return slots.ContainsKey(pos) ? slots[pos] : null;
     }
     public void SpawnSlot()
     {
