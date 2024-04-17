@@ -10,17 +10,28 @@ public class Slot : MonoBehaviour
     public Image icon;
     private Item item = null;
     private bool isBlock = false;
-    public void SlotInit(Vector2Int pos, Item item, bool isBlock)
+    public void SlotInit(Vector2Int pos, bool isBlock)
     {
         this.isBlock = isBlock;
         this.pos = pos;
-        this.item = item;
+        img.gameObject.SetActive(!isBlock);
+        icon.gameObject.SetActive(!isBlock);
+    }
+    public void ChangeItem(Item newItem, float timer)
+    {
+        if (isBlock)
+        {
+            return;
+        }
+        item = newItem;
+        Invoke(nameof(ChangeSprite), timer);
+    }
+    public void ChangeSprite()
+    {
         if (item != null)
         {
             icon.sprite = item.sprite;
         }
-        img.gameObject.SetActive(!isBlock);
-        icon.gameObject.SetActive(!isBlock);
     }
     public Vector2Int GetPosition()
     {

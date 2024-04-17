@@ -14,6 +14,10 @@ public class SlotController : MonoBehaviour
     private Dictionary<Vector2Int, Slot> slots = new();
     private List<Slot> remainSlots = new();
 
+    [SerializeField] private float waitTimer = 1f;
+    [SerializeField] private float timeBwt = 0.5f;
+    int current = 1;
+
     [SerializeField] private Sprite touchSprite;
     [SerializeField] private Sprite defaultSprite;
 
@@ -44,6 +48,7 @@ public class SlotController : MonoBehaviour
     {
         GetListItems();
         SpawnSlot();
+        Invoke(nameof(SpawnItem), 1f);
     }
     public void GetListItems()
     {
@@ -130,10 +135,25 @@ public class SlotController : MonoBehaviour
             {
                 Vector2Int pos = new(j, i);
                 Slot tempSlot = Instantiate(slot, slot_container_ui.transform);
-                Item item = GetRandomItem();
-                tempSlot.SlotInit(pos, item, blocks.Contains(pos));
+                tempSlot.SlotInit(pos, blocks.Contains(pos));
                 slots[pos] = tempSlot;
                 remainSlots.Add(tempSlot);
+            }
+        }
+    }
+    public void SpawnItem()
+    {
+        int x = size.x;
+        int y = size.y;
+        for (int i = 0; i < y; i++)
+        {
+            for (int j = 0; j < x; j++)
+            {
+                Vector2Int pos = new(j, i);
+                Slot tempSlot = slots[pos];
+                Item item = GetRandomItem();
+                tempSlot.ChangeItem(item, waitTimer + timeBwt * current);
+                current++;
             }
         }
     }

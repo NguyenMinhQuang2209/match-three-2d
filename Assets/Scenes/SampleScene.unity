@@ -493,6 +493,8 @@ MonoBehaviour:
   slot: {fileID: 4446696346587855104, guid: 2fe2a345f01a58d468afd6baccd3ac4b, type: 3}
   slot_container_ui: {fileID: 236005198}
   size: {x: 8, y: 10}
+  waitTimer: 1
+  timeBwt: 0.05
   touchSprite: {fileID: 21300000, guid: 3575964f12454804aaadbb3d1bd64770, type: 3}
   defaultSprite: {fileID: 21300000, guid: 9ae214f66e3eee9488c34a47721384ab, type: 3}
   raycaster: {fileID: 923401222}
